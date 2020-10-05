@@ -1,8 +1,8 @@
 use lambda::Context;
 use serde_json::json;
 
-use sls_rust::graphql::types::*;
-use sls_rust::handler::handler;
+use lib::graphql::types::*;
+use lib::handler::handler;
 
 #[tokio::test]
 async fn handler_handles_basic_event() {

@@ -1,13 +1,7 @@
 use lambda::handler_fn;
 
-mod dynamodb;
-mod global;
-mod graphql;
-mod handler;
-mod types;
-
-use crate::handler::handler;
-use crate::types::Error;
+use ::lib::handler::handler;
+use ::lib::types::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
