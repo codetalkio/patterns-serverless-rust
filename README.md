@@ -1,5 +1,5 @@
 # Patterns: Serverless Rust ![ci badge](https://github.com/codetalkio/patterns-serverless-rust/workflows/ci/badge.svg?branch=master)
-The following is an minimal templae for deploying a Rust AWS Lambda function. All deployment is managed by the AWS CDK tool.
+The following is a template for deploying a Rust AWS Lambda function. All deployment is managed by the AWS CDK tool.
 
 If you are interested in a more minimal version of this, check out [patterns-serverless-rust-minimal](https://github.com/codetalkio/patterns-serverless-rust-minimal).
 
