@@ -26,7 +26,7 @@ impl MovieQuery {
     async fn movies(&self) -> Vec<Movie> {
         vec![Movie {
             name: "Bill and Ted".to_string(),
-            year: 1989
+            year: 1989,
         }]
     }
 }
