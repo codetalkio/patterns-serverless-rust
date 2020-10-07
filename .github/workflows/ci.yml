@@ -12,6 +12,7 @@ jobs:
         with:
           toolchain: nightly-2020-08-28
           override: true
+          components: clippy
       - uses: actions/cache@v2
         with:
           path: |
@@ -58,6 +59,7 @@ jobs:
         with:
           toolchain: nightly-2020-08-28
           override: true
+          components: clippy
       - uses: actions/cache@v2
         with:
           path: |
@@ -70,27 +72,22 @@ jobs:
   # Generate a static build artifact for usage in deployments.
   assets:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
-      - name: Install musl-tools
-        run: sudo apt-get install musl-tools
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly-2020-08-28
           override: true
-          target: x86_64-unknown-linux-musl
+          components: clippy
       - uses: actions/cache@v2
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}-release
-
-      - run: |
-          npm run build
-
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: "Build asset"
+        uses: ./.github/actions/build-asset
       # NOTE: Artifacts are not available across workflows.
       - uses: actions/upload-artifact@v2
         with:
@@ -106,7 +103,7 @@ jobs:
       localstack:
         image: localstack/localstack:latest
         env:
-          SERVICES: cloudformation,iam,sts,ssm,s3,cloudwatch,cloudwatch-logs,lambda,dynamodb,apigateway
+          SERVICES: serverless,cloudformation,iam,sts,sqs,ssm,s3,cloudwatch,cloudwatch-logs,lambda,dynamodb,apigateway
           DEFAULT_REGION: eu-west-1
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
@@ -126,14 +123,8 @@ jobs:
           key: node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             node-
-
-      - name: Upgrade NPM to 6.14.8
-        run: |
-          npm i -g npm@6.14.8
-
-      - name: "Install dependencies"
-        run: |
-          npm ci
+      - name: "Setup node dependencies"
+        uses: ./.github/actions/setup-node-deps
 
       - uses: actions/download-artifact@v2
         with:
