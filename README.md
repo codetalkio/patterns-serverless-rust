@@ -16,10 +16,8 @@ Remaining:
 
 - [ ] Rework GraphQL schema a bit
 - [ ] Finish DynamoDB setup
-- [ ] Add LocalStack
 - [ ] Add tests using local DynamoDB
 - [ ] Plug in dataloader
-- [ ] Add [cache](https://github.com/actions/cache/blob/main/examples.md#rust---cargo) to the GitHub actions
 
 **⚡️ Quick start ⚡️**
 

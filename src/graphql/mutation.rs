@@ -12,7 +12,7 @@ pub struct ActorsMutation;
 #[Object]
 impl ActorsMutation {
     // FIXME: Return Result<Actor> instead.
-    #[field(desc = "Returns the sum of a and b")]
+    // #[field(desc = "Returns the sum of a and b")]
     async fn add_actor(&self, name: String, movie: String) -> Actor {
         Actor { name, movie }
     }
@@ -24,7 +24,7 @@ pub struct MovieMutation;
 #[Object]
 impl MovieMutation {
     // FIXME: Return Result<Movie> instead.
-    #[field(desc = "Return a list of all movies")]
+    // #[field(desc = "Return a list of all movies")]
     async fn add_movie(&self, name: String, year: u16) -> Movie {
         let movie_item = dynamo::Movie {
             pk: "movie".to_string(),
@@ -52,6 +52,5 @@ impl MovieMutation {
     }
 }
 
-#[MergedObject]
-#[derive(Default)]
+#[derive(MergedObject, Default)]
 pub struct MutationRoot(ActorsMutation, MovieMutation);

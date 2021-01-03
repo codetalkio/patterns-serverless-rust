@@ -5,8 +5,19 @@ import * as cdk from "@aws-cdk/core";
 const { BENCHMARK_SUFFIX } = process.env;
 
 interface Props {
+  /**
+   * The region we are deploying the DynamoDB table to.
+   */
   region: string;
+
+  /**
+   * The table name.
+   */
   tableName: string;
+
+  /**
+   * Enable the DynamoDB stream.
+   */
   enableStream: boolean;
 }
 

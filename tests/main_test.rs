@@ -1,3 +1,4 @@
+use async_graphql::value;
 use lambda::Context;
 use serde_json::json;
 
@@ -9,7 +10,7 @@ async fn handler_handles_basic_event() {
     let event = json!({
         "query": "{ movies { name year } }"
     });
-    let expected = json!({
+    let expected = value!({
         "movies": vec![Movie {
             name: "Bill and Ted".to_string(),
             year: 1989,

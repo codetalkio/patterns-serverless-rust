@@ -8,7 +8,7 @@ pub struct ActorsQuery;
 
 #[Object]
 impl ActorsQuery {
-    #[field(desc = "Return a list of actors.")]
+    // #[field(desc = "Return a list of actors.")]
     async fn actors(&self) -> Vec<Actor> {
         vec![Actor {
             name: "John".to_string(),
@@ -22,7 +22,7 @@ pub struct MovieQuery;
 
 #[Object]
 impl MovieQuery {
-    #[field(desc = "Return a list of all movies.")]
+    // #[field(desc = "Return a list of all movies.")]
     async fn movies(&self) -> Vec<Movie> {
         vec![Movie {
             name: "Bill and Ted".to_string(),
@@ -31,6 +31,5 @@ impl MovieQuery {
     }
 }
 
-#[MergedObject]
-#[derive(Default)]
+#[derive(MergedObject, Default)]
 pub struct QueryRoot(ActorsQuery, MovieQuery);
