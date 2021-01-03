@@ -8,8 +8,8 @@ If you are interested in a more minimal version of this, check out [patterns-ser
 - 🦀 Ready-to-use serverless setup using Rust and [AWS CDK](https://github.com/aws/aws-cdk).
 - 🎟 [GraphQL](https://graphql.org) boilerplate taken care of.
 - 🧘‍♀️ [AWS DynamoDB](https://www.dynamodbguide.com) boilerplate taken care of.
-- 👩‍💻 Local development setup using [LocalStack](https://github.com/localstack/localstack).
-- 🚗 CI using [GitHub actions](https://github.com/features/actions) and automatic asset uploading.
+- 🚗 CI using [GitHub Actions](https://github.com/features/actions) testing the deployment using [LocalStack](https://github.com/localstack/localstack).
+- 👩‍💻 Local development using [LocalStack](https://github.com/localstack/localstack).
 - 🚀 Deployments via [GitHub releases](https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/about-releases).
 
 Remaining:
@@ -21,29 +21,37 @@ Remaining:
 - [ ] Plug in dataloader
 - [ ] Add [cache](https://github.com/actions/cache/blob/main/examples.md#rust---cargo) to the GitHub actions
 
+**⚡️ Quick start ⚡️**
+
+Assuming you have set up npm and cargo/rustup, the following will get you going:
+
+- `npm ci`: install all our deployment dependencies.
+- `npm run build`: build the Rust executable and package it as an asset for CDK.
+- `npm run cdk:deploy`: deploy the packaged asset.
+
+The stack name is controlled by the `name` field in `package.json`. Other than that, just use your regular Rust development setup.
+
+<img width="784" alt="Screenshot 2020-10-06 at 22 56 27" src="https://user-images.githubusercontent.com/1189998/95259406-6bc8ca80-0827-11eb-9132-0c6494921fe7.png">
+
+Use this repo as a template to get quickly started! If you are interested in a more fully-featured version of this, check out [🚧 patterns-serverless-rust 🚧](https://github.com/codetalkio/patterns-serverless-rust) for how to expose a GraphQL endpoint and use DynamoDB.
+
+<!-- COMMON SECTION -->
 ### Overview
 
-- [Quick start](#️-quick-start)
 - [Building](#-building)
 - [Deployment using CDK](#-deployment-using-cdk)
-- [Deployment using AWS CLI](#-deployment-using-aws-cli)
+- [Development using LocalStack](#-development-using-localstack)
 - [GitHub Actions (CI/CD)](#--github-actions-cicd)
 - [Benchmarks using AWS XRay](#️️-benchmarks-using-aws-xray)
 - [Libraries](#-libraries)
 - [Contributing](#️-contributing)
 
-## ⚡️ Quick start
-
-- `npm ci`: install all our deployment dependencies.
-- `npm run build`: build the Rust executable and package it as an asset for CDK.
-- `npm run cdk:deploy`: deploy the packaged asset.
-- The stack name is controlled by the `name` field in `package.json`.
-
-Other than that, just use your regular Rust development setup, and the commands below (all prefixed with `npm run`):
+An overview of commands (all prefixed with `npm run`):
 
 | Command | Description | Purpose |
 |---------|-------------|---------|
 | `build` | Build the Rust executable for release | 📦 |
+| `build:debug` | Build the Rust executable for debug | 📦 |
 | `build:archive` | Creates a `./lambda.zip` for deployment using the AWS CLI | 📦 |
 | `build:clean` | Cleans build artifcats from `target/cdk` | 📦 |
 | `deploy` | Cleans and builds a new executable, and deploys it via CDK | 📦 + 🚢 |
@@ -53,38 +61,30 @@ Other than that, just use your regular Rust development setup, and the commands 
 | `cdklocal:bootstrap` | Bootstrap necessary resources for CDK against LocalStack | 👩‍💻 |
 | `cdklocal:deploy` | Deploy this stack to LocalStack | 👩‍💻 |
 
-
 ## 📦 Building
 We build our executable by running `npm run build`.
 
 Behind the scenes, the `build` NPM script does the following:
 
 - Adds our `x86_64-unknown-linux-musl` toolchain
-- Runs `cargo build --release --target x86_64-unknown-linux-musl -Z unstable-options --out-dir target/cdk/release`
+- Runs `cargo build --release --target x86_64-unknown-linux-musl`
 
 
 In other words, we cross-compile a static binary for `x86_64-unknown-linux-musl`, put the executable, `bootstrap`, in `target/cdk/release`, and CDK uses that as its asset. With custom runtimes, AWS Lambda looks for an executable called `bootstrap`, so this is why we need the renaming step.
 
-## 👩‍💻 Development using LocalStack
-
-LocalStack allows us to deploy our CDK services directly to our local environment:
-
-- `npm run cdklocal:start` to start the LocalStack services.
-- `npm run cdklocal:boostrap` to create the necessary CDK stack resources on the cloud.
-- `npm run cdklocal:deploy` to deploy our stack.
-
-We can now target the local services with `cdklocal` or by setting the `endpoint` option on the AWS CLI, e.g. `aws --endpoint-url=http://localhost:4566`.
-
 ## 🚢 Deployment using CDK
-We build and deploy by running `npm run deploy`, or just `npm run cdk:deploy` if you have already run `npm run build` previouslt.
+We build and deploy by running `npm run deploy`, or just `npm run cdk:deploy` if you have already run `npm run build` previously.
 
 A couple of notes:
 
 - If this is the first CDK deployment ever on your AWS account/region, run `npm run cdk:bootstrap` first. This creates the necessary CDK stack resources on the cloud.
 - The CDK deployment bundles the `target/cdk/release` folder as its assets. This is where the `bootstrap` file needs to be located (handled by `npm run build`).
 
+**Generate our build assets**
 
-> 💡 The rest assumes you have run `npm run build` to create the `boostrap` asset we will use to deploy our function.
+```bash
+$ npm run build
+```
 
 **Deploy the Rust asset**
 
@@ -126,8 +126,9 @@ And finally, if you want to see a diff between your deployed stack and your loca
 $ npm run cdk:diff
 ```
 
+<details>
+<summary> 👈 Expand here for deployment using AWS CLI</summary>
 
-## 🚢 Deployment using AWS CLI
 For real-usage we will deploy using AWS CDK, but you can dip your feet by deploying the Rust function via the AWS CLI.
 
 We'll do a couple of steps additional steps for the first time setup. Only step 5. is necessary after having done this once:
@@ -206,12 +207,45 @@ $ aws iam detach-role-policy --role-name sls-rust-test-execution --policy-arn ar
 $ aws iam delete-role --role-name sls-rust-test-execution
 ```
 
+</details>
+
+
+<!-- COMMON SECTION -->
+## 👩‍💻 Development using LocalStack
+
+LocalStack allows us to deploy our CDK services directly to our local environment:
+
+1. `npm run cdklocal:start` to start the LocalStack services.
+2. `npm run cdklocal:boostrap` to create the necessary CDK stack resources on the cloud.
+3. `npm run cdklocal:deploy` to deploy our stack.
+4. Target the local services from our application, with `cdklocal`, or by setting the `endpoint` option on the AWS CLI, e.g. `aws --endpoint-url=http://localhost:4566`.
+
+We can use [cargo watch](https://crates.io/crates/cargo-watch) (via `cargo install cargo-watch`) to continously build a debug build of our application,
+
+```bash
+$ cargo watch -s 'npm run build:debug'
+```
+
+If you want to test the application through the AWS CLI, the following should do the trick,
+
+```bash
+$ aws --endpoint-url=http://localhost:4566 lambda invoke \
+  --function-name sls-rust-minimal-main \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"firstName": "world"}' \
+  tmp-output.json > /dev/null && cat tmp-output.json && rm tmp-output.json
+{"message":"Hello, world!"}
+```
+
+
+<!-- COMMON SECTION -->
 ## 🚗 🚀 GitHub Actions (CI/CD)
 Using [GitHub actions](/actions) allows us to have an efficient CI/CD setup with minimal work.
 
 | Workflow | Trigger | Purpose | Environment Variables |
 |----------|---------|---------|-----------------------|
 | **ci** | push | Continously test the build along with linting, formatting, best-practices (clippy), and validate deployment against LocalStack | |
+| **pre-release** | Pre-release using GitHub Releases | Run benchmark suite | **BENCHMARK_AWS_ACCESS_KEY_ID** <br /> **BENCHMARK_AWS_SECRET_ACCESS_KEY** <br /> **BENCHMARK_AWS_SECRET_ACCESS_KEY** |
 | **pre-release** | Pre-release using GitHub Releases | Deploy to a QA or staging environment |  **PRE_RELEASE_AWS_ACCESS_KEY_ID** <br /> **PRE_RELEASE_AWS_SECRET_ACCESS_KEY** <br /> **PRE_RELEASE_AWS_SECRET_ACCESS_KEY** |
 | **release** | Release using GitHub Releases | Deploy to production environment | **RELEASE_AWS_ACCESS_KEY_ID** <br /> **RELEASE_AWS_SECRET_ACCESS_KEY** <br /> **RELEASE_AWS_SECRET_ACCESS_KEY** |
 
@@ -219,6 +253,7 @@ The CI will work seamlessly without any manual steps, but for deployments via [G
 
 These are used in the `.github/workflows/release.yml` and `.github/workflows/pre-release.yml` workflows for deploying the CDK stack whenever a GitHub pre-release/release is made.
 
+<!-- COMMON SECTION -->
 ## 🕵️‍♀️ Benchmarks using AWS XRay
 
 Since we have enabled `tracing: lambda.Tracing.ACTIVE` in CDK and `tracing-config Mode=Active` in the CLI, we will get XRay traces for our AWS Lambda invocations.
@@ -227,16 +262,33 @@ You can checkout each trace in the AWS Console inside the XRay service, which is
 
 We can benchmark our performance using `npm run benchmark`, which will deploy the AWS Lambda to your AWS account, invoke it a bunch of times and trigger cold starts, along with gathering up all the AWS XRay traces into a neat table.
 
-Check out [the response-times table](./benchmark/response-times.md) for a the output of `npm run benchmark`.
+Below are two charts generated by the benchmark, you can see the raw data in [the response-times table](./benchmark/response-times.md).
 
+
+![Average Cold/Warm Response Times](./benchmark/response-times-average.svg)
+
+- 🔵: Average cold startup times
+- 🔴: Average warm startup times
+
+![Fastest and Slowest Response Times](./benchmark/response-times-extremes.svg)
+
+- 🔵: Fastest warm response time
+- 🔴: Slowest warm response time
+- 🟡: Fastest cold response time
+- 🟠: Slowest cold response time
+
+Benchmarks can be triggered in the CI by setting up its environment variables and creating a pre-release via GitHub Releases.
+
+<!-- PATTERN-SPECIFIC SECTION -->
 ## 📚 Libraries
 We are using a couple of libraries, in various state of maturity/release:
 
-- The master branch of [aws-lambda-rust-runtime](https://github.com/awslabs/aws-lambda-rust-runtime) pending on [#216](https://github.com/awslabs/aws-lambda-rust-runtime/issues/216) ([README from PR](https://github.com/awslabs/aws-lambda-rust-runtime/blob/5d50e1ca29b20fccaf85074a6904fa4b6ece4f05/README.md)) to be finalised for official async/await support.
+- The netlify fork of [aws-lambda-rust-runtime](https://github.com/netlify/aws-lambda-rust-runtime) pending on [#274](https://github.com/awslabs/aws-lambda-rust-runtime/issues/274).
   - We will need the musl tools, which we use instead of glibc, via `apt-get install musl-tools` for Ubuntu or `brew tap SergioBenitez/osxct && brew install FiloSottile/musl-cross/musl-cross` for macOS.
 - [aws-cdk](https://docs.aws.amazon.com/cdk/latest/guide/home.html) for deploying to AWS, using CloudFormation under-the-hood. We'll use their support for [Custom Runtimes](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-lambda-readme.html).
 - The [aws-cdk fork](https://github.com/localstack/aws-cdk) of [localstack](https://github.com/localstack/localstack) for a local development setup.
 - [cargo watch](https://github.com/passcod/cargo-watch) so we can develop using `cargo watch`, installable via `cargo install cargo-watch`.
 
+<!-- COMMON SECTION -->
 ## 🙋‍♀️ Contributing
 Have any improvements our ideas? Don't be afraid to create an issue to discuss what's on your mind!

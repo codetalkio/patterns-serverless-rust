@@ -2,14 +2,15 @@ import * as cdk from "@aws-cdk/core";
 
 import { DynamoDBStack } from "../lib/dynamodb-stack";
 import { LambdaStack } from "../lib/lambda-stack";
+import * as pkg from "../../package.json";
 
-const STACK_NAME = "sls-rust";
+// Allow appending a randomized benchmark number.
+const { BENCHMARK_SUFFIX } = process.env;
+const STACK_NAME = BENCHMARK_SUFFIX ? `${pkg.name}-${BENCHMARK_SUFFIX}` : pkg.name;
 const TABLE_NAME = "slsRustTest";
 
-const app = new cdk.App();
-
 /**
- * Construct for the Serverless Rust Application.
+ * Construct for the Serverless Application.
  *
  * NOTE: We export the our construct so that it's possible to stitch it into a larger deployment.
  */
@@ -21,7 +22,9 @@ export default class Stack {
     // We require that we've set an AWS region.
     const region = process.env.AWS_REGION;
     if (!region) {
-      console.error("[SlsRust] No AWS_REGION specified! This is required to ensure we are in control of the deployment.");
+      console.error(
+        "[Deployment] No AWS_REGION specified! This is required to ensure we are in control of the deployment."
+      );
       process.exit(1);
     }
 
@@ -33,9 +36,10 @@ export default class Stack {
     });
 
     // Set up our Lambda Stack and mark it as depending on the DynamoDB stack.
-    this.lambdaStack = new LambdaStack(app, `${STACK_NAME}`, { region, tableName: TABLE_NAME });
+    this.lambdaStack = new LambdaStack(app, `${STACK_NAME}`, { table: this.dynamoDBStack.table });
     this.lambdaStack.addDependency(this.dynamoDBStack);
   }
 }
 
+const app = new cdk.App();
 new Stack(app);

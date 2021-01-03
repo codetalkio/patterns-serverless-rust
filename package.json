@@ -11,33 +11,45 @@
     "cdk"
   ],
   "scripts": {
-    "deploy": "npm run build && npm run cdk:deploy",
-    "build": "npm run build:clean && rustup target add x86_64-unknown-linux-musl && cargo build --release --target x86_64-unknown-linux-musl -Z unstable-options --out-dir target/cdk/release",
+    "build": "rustup target add x86_64-unknown-linux-musl && cargo build --release --target x86_64-unknown-linux-musl && mkdir -p ./target/cdk/release && cp ./target/x86_64-unknown-linux-musl/release/bootstrap ./target/cdk/release/bootstrap",
+    "build:debug": "cargo build --target x86_64-unknown-linux-musl && mkdir -p ./target/cdk/release && cp ./target/x86_64-unknown-linux-musl/debug/bootstrap ./target/cdk/release/bootstrap",
     "build:archive": "(cd ./target/cdk/release/ && zip ./lambda.zip ./bootstrap) && mv ./target/cdk/release/lambda.zip ./lambda.zip",
     "build:clean": "rm -r ./target/cdk/release || echo '[build:clean] No existing release found.'",
-    "cdk:synth": "cdk synth # emits the synthesized CloudFormation template",
-    "cdk:diff": "cdk diff # compare deployed stack with current state",
-    "cdk:deploy": "[[ $CI == 'true' ]] && CDK_APPROVAL='never' || CDK_APPROVAL='broadening'; cdk deploy --require-approval $CDK_APPROVAL $npm_package_name",
+    "deploy": "npm run build:clean && npm run build && npm run cdk:deploy",
+    "benchmark": "export BENCHMARK_SUFFIX=${BENCHMARK_SUFFIX-$RANDOM}; npm run benchmark:setup && ts-node -- ./benchmark/benchmark.ts && npm run benchmark:destroy",
+    "benchmark:setup": "[[ $DRY_RUN != 'true' ]] && CI=true npm run deploy || echo 'Dry run, skipping deploy.'",
+    "benchmark:destroy": "[[ $BENCHMARK_SUFFIX != '' && $DRY_RUN != 'true' ]] &&  cdk destroy --force '*' || echo 'Dry run, skipping teardown.'",
+    "cdk:synth": "cdk synth",
+    "cdk:diff": "cdk diff",
+    "cdk:deploy": "[[ $CI == 'true' ]] && export CDK_APPROVAL='never' || export CDK_APPROVAL='broadening'; cdk deploy --require-approval $CDK_APPROVAL '*'",
     "cdk:bootstrap": "cdk bootstrap aws://$(aws sts get-caller-identity | jq -r .Account)/$AWS_REGION",
     "cdklocal:start": "docker-compose up",
     "cdklocal:clear-cache": "(rm ~/.cdk/cache/accounts.json || true) && (rm ~/.cdk/cache/accounts_partitions.json || true)",
-    "cdklocal:deploy": "npm run --silent cdklocal:clear-cache && AWS_REGION=eu-west-1 cdklocal deploy --require-approval never $npm_package_name",
-    "cdklocal:bootstrap": "npm run --silent cdklocal:clear-cache && AWS_REGION=eu-west-1 cdklocal bootstrap aws://000000000000/eu-west-1"
+    "cdklocal:deploy": "npm run --silent cdklocal:clear-cache && CDK_LOCAL=true AWS_REGION=eu-west-1 cdklocal deploy --require-approval never '*'",
+    "cdklocal:bootstrap": "npm run --silent cdklocal:clear-cache && CDK_LOCAL=true AWS_REGION=eu-west-1 cdklocal bootstrap aws://000000000000/eu-west-1",
+    "ts-node": "ts-node"
   },
   "dependencies": {},
   "devDependencies": {
-    "aws-cdk": "1.64.1",
-    "aws-cdk-local": "1.64.1-dev1",
-    "@aws-cdk/core": "1.64.1",
-    "@aws-cdk/assert": "1.64.1",
-    "@aws-cdk/aws-apigateway": "1.64.1",
-    "@aws-cdk/aws-lambda": "1.64.1",
-    "@aws-cdk/aws-dynamodb": "1.64.1",
-    "@aws-cdk/aws-events-targets": "1.64.1",
-    "@aws-cdk/aws-events": "1.64.1",
+    "@aws-cdk/assert": "1.81.0",
+    "@aws-cdk/aws-lambda": "1.81.0",
+    "@aws-cdk/aws-s3": "1.81.0",
+    "@aws-cdk/core": "1.81.0",
+    "@aws-cdk/aws-apigateway": "1.81.0",
+    "@aws-cdk/aws-dynamodb": "1.81.0",
+    "@aws-cdk/aws-events-targets": "1.81.0",
+    "@aws-cdk/aws-events": "1.81.0",
+    "@aws-sdk/client-lambda": "^3.1.0",
+    "@aws-sdk/client-xray": "^3.1.0",
     "@types/node": "14.11.2",
-    "ts-node": "9.0.0",
+    "aws-cdk": "1.81.0",
+    "aws-cdk-local": "1.65.2",
+    "svg-chartist": "^1.0.1",
+    "ts-node": "9.1.1",
     "tsconfig-paths": "3.9.0",
-    "typescript": "4.0.3"
+    "typescript": "4.1.3"
+  },
+  "prettier": {
+    "printWidth": 120
   }
 }

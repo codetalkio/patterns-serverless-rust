@@ -2,6 +2,8 @@ import * as core from "@aws-cdk/core";
 import * as dynamo from "@aws-cdk/aws-dynamodb";
 import * as cdk from "@aws-cdk/core";
 
+const { BENCHMARK_SUFFIX } = process.env;
+
 interface Props {
   region: string;
   tableName: string;
@@ -9,11 +11,13 @@ interface Props {
 }
 
 export class DynamoDBStack extends core.Stack {
+  table: dynamo.Table;
+
   constructor(scope: cdk.App, id: string, props: Props) {
     super(scope, id);
 
     // Our Lambda function details.
-    const table = new dynamo.Table(this, props.tableName, {
+    this.table = new dynamo.Table(this, props.tableName, {
       tableName: props.tableName,
       billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
       partitionKey: {
@@ -24,9 +28,12 @@ export class DynamoDBStack extends core.Stack {
         name: "sk",
         type: dynamo.AttributeType.STRING,
       },
+      // Allow the table to be destroyed after benchmarks.
+      removalPolicy: BENCHMARK_SUFFIX ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
       // Optional: Enable a DynamoDB stream.
       stream: props.enableStream ? dynamo.StreamViewType.NEW_AND_OLD_IMAGES : undefined,
     });
+    const table = this.table;
 
     // Tag our resource.
     core.Aspects.of(table).add(new cdk.Tag("service-type", "Database"));

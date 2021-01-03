@@ -7,9 +7,9 @@ on:
       - released
 
 jobs:
-  deploy:
+  # Generate a static build artifact for usage in deployments.
+  assets:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Validate release tag
@@ -17,7 +17,35 @@ jobs:
           # We only want to run on tags looking like refs/tags/v1200.
           echo "Checking tag: $GITHUB_REF"
           [[ "${GITHUB_REF:10:1}" == "v" ]] || exit 1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.49.0
 
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: "Build asset"
+        uses: ./.github/actions/build-asset
+      # NOTE: Artifacts are not available across workflows.
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bootstrap
+          path: ./target/cdk/release/bootstrap
+          if-no-files-found: error
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: "deploy release"
+    needs: [assets]
+    environment:
+      name: production
+
+    steps:
+      - uses: actions/checkout@v2
       - name: Setup Node.js 14.12.0
         uses: actions/setup-node@v1
         with:
@@ -30,15 +58,19 @@ jobs:
           restore-keys: |
             node-
       - name: "Setup node dependencies"
-        uses: .github/actions/setup-node-deps
-      - name: "Build asset"
-        uses: .github/actions/build-asset
+        uses: ./.github/actions/setup-node-deps
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: bootstrap
+          path: ./target/cdk/release
 
       - name: Deploy
         if: env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.RELEASE_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASE_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.RELEASE_AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.RELEASE_AWS_REGION }}
+          CI: "true"
         run: |
-          AWS_REGION=$AWS_DEFAULT_REGION npm run cdk:deploy
+          npm run cdk:deploy
