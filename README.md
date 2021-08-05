@@ -5,8 +5,8 @@ If you are interested in a more minimal version of this, check out [patterns-ser
 
 **✨ Features ✨**
 
-- 🦀 Ready-to-use serverless setup using Rust and [AWS CDK](https://github.com/aws/aws-cdk).
-- 🎟 [GraphQL](https://graphql.org) boilerplate taken care of.
+ - 🦀 Ready-to-use serverless setup using Rust and [AWS CDK](https://github.com/aws/aws-cdk).
+ - 🎟 [GraphQL](https://graphql.org) boilerplate taken care of.
 - 🧘‍♀️ [AWS DynamoDB](https://www.dynamodbguide.com) boilerplate taken care of.
 - 🚗 CI using [GitHub Actions](https://github.com/features/actions) testing the deployment using [LocalStack](https://github.com/localstack/localstack).
 - 👩‍💻 Local development using [LocalStack](https://github.com/localstack/localstack).
